@@ -1,0 +1,157 @@
+/* ==========================================================================
+   Quorum — coquille applicative et grilles
+   Mobile d'abord : la navigation est un tiroir sous 60rem, une colonne au-delà.
+   ========================================================================== */
+
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Bandeau supérieur --------------------------------------------------- */
+.app-header {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  display: flex; align-items: center; gap: var(--s-3);
+  min-height: var(--header-h);
+  padding: var(--s-2) var(--s-4);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand { display: flex; align-items: center; gap: var(--s-2); min-width: 0; }
+.brand__mark {
+  display: grid; place-items: center;
+  width: 1.75rem; height: 1.75rem; flex: none;
+  border-radius: var(--r-sm);
+  background: var(--brand); color: var(--brand-on);
+  font-family: var(--font-serif); font-size: var(--text-md); font-weight: 600;
+}
+.brand__name { font-size: var(--text-md); font-weight: 600; letter-spacing: -0.01em; }
+.brand__org {
+  font-size: var(--text-xs); color: var(--text-3);
+  padding-left: var(--s-3); border-left: 1px solid var(--border);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (max-width: 40rem) { .brand__org { display: none; } }
+/* Sous 30rem, le bandeau ne garde que le sigle : le sélecteur de rôle et les
+   bascules thème/langue doivent rester atteignables au pouce. */
+@media (max-width: 30rem) {
+  .brand__name { display: none; }
+  .app-header { gap: var(--s-2); padding-inline: var(--s-3); }
+  .app-header__tools .select { max-width: 9rem; }
+}
+
+.app-header__tools { display: flex; align-items: center; gap: var(--s-1); margin-left: auto; }
+
+/* --- Corps : navigation + contenu ---------------------------------------- */
+.app-body { display: flex; flex: 1; min-height: 0; }
+
+.app-nav {
+  flex: 0 0 var(--sidebar-w); width: var(--sidebar-w);
+  padding: var(--s-4) var(--s-3) var(--s-8);
+  border-right: 1px solid var(--border);
+  background: var(--bg-elevated);
+  overflow-y: auto;
+}
+
+.app-main { flex: 1; min-width: 0; padding-bottom: var(--s-10); }
+
+.view {
+  max-width: var(--content-max);
+  padding: var(--s-6) var(--s-5);
+  animation: q-rise var(--dur-slow) var(--ease) both;
+}
+@media (max-width: 48rem) { .view { padding: var(--s-5) var(--s-4); } }
+
+/* --- Navigation mobile : tiroir ------------------------------------------ */
+/* Sélecteur porté par .app-header : .btn déclare inline-flex et serait sinon
+   prioritaire, le bouton restant visible sur grand écran. */
+.app-header .nav-toggle { display: none; }
+
+@media (max-width: 60rem) {
+  .app-header .nav-toggle { display: inline-flex; }
+  .app-nav {
+    position: fixed; inset: var(--header-h) auto 0 0; z-index: var(--z-drawer);
+    width: min(18rem, 84vw);
+    transform: translateX(-101%);
+    transition: transform var(--dur) var(--ease);
+    box-shadow: var(--shadow-lg);
+  }
+  .app-nav[data-open="true"] { transform: none; }
+  .nav-scrim {
+    position: fixed; inset: var(--header-h) 0 0 0; z-index: calc(var(--z-drawer) - 1);
+    background: rgba(0, 0, 0, 0.4);
+    animation: q-fade var(--dur) var(--ease);
+  }
+}
+
+/* --- Éléments de navigation ---------------------------------------------- */
+.nav-group { margin-top: var(--s-5); }
+.nav-group:first-of-type { margin-top: 0; }
+.nav-group__title {
+  padding: 0 var(--s-3) var(--s-2);
+  font-size: var(--text-2xs); font-weight: 600;
+  letter-spacing: var(--tracking-wide); text-transform: uppercase;
+  color: var(--text-3);
+}
+.nav-item {
+  display: flex; align-items: center; gap: var(--s-2);
+  width: 100%; padding: var(--s-2) var(--s-3); margin-bottom: 2px;
+  border-radius: var(--r-sm);
+  font-size: var(--text-sm); color: var(--text-2);
+  text-align: left; text-decoration: none;
+  transition: background var(--dur-fast) var(--ease);
+}
+.nav-item:hover { background: var(--surface-2); color: var(--text); }
+.nav-item[aria-current="page"] {
+  background: var(--brand-soft); color: var(--brand); font-weight: 600;
+}
+.nav-item__icon { flex: none; width: 1rem; height: 1rem; opacity: 0.85; }
+.nav-item__count {
+  margin-left: auto; font-size: var(--text-2xs);
+  padding: 1px var(--s-2); border-radius: var(--r-full);
+  background: var(--surface-3); color: var(--text-3);
+}
+
+/* --- En-tête de page ----------------------------------------------------- */
+.page-head {
+  display: flex; align-items: flex-end; gap: var(--s-5);
+  flex-wrap: wrap; margin-bottom: var(--s-5);
+}
+.page-head__text { flex: 1; min-width: min(100%, 18rem); }
+.page-head h1 { margin-bottom: var(--s-2); }
+.page-head p { font-size: var(--text-md); color: var(--text-2); max-width: var(--measure); }
+.page-head__actions { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+
+.back-link {
+  display: inline-flex; align-items: center; gap: var(--s-1);
+  margin-bottom: var(--s-3);
+  font-size: var(--text-sm); color: var(--text-3);
+  background: none; text-decoration: none;
+}
+.back-link:hover { color: var(--brand); }
+
+/* --- Grilles ------------------------------------------------------------- */
+.grid { display: grid; gap: var(--s-4); }
+.grid--2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+.grid--3 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+.grid--4 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+
+.split { display: grid; gap: var(--s-5); grid-template-columns: 1fr; }
+@media (min-width: 64rem) {
+  .split { grid-template-columns: minmax(0, 1fr) 21rem; align-items: start; }
+  .split__aside { position: sticky; top: calc(var(--header-h) + var(--s-4)); }
+}
+
+.row { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.row--tight { gap: var(--s-2); }
+.row--end { justify-content: flex-end; }
+
+/* --- Plein écran (bulletin, séance) -------------------------------------- */
+.fullscreen {
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+}

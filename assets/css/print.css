@@ -1,0 +1,51 @@
+/* ==========================================================================
+   Quorum — impression (procès-verbal, listes d'émargement, codes d'accès)
+   Tout ce qui n'est pas le document est masqué.
+   ========================================================================== */
+
+@media print {
+  :root { --bg: #fff; --surface: #fff; --text: #000; --text-2: #333; --text-3: #555; }
+
+  .app-header, .app-nav, .nav-scrim, .toast-region,
+  .no-print, .page-head__actions, .btn, .segmented { display: none !important; }
+
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .app-main, .view { padding: 0; max-width: none; animation: none; }
+
+  .card, .table-wrap { border: 0; padding: 0; box-shadow: none; }
+
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #555; }
+
+  h1, h2, h3 { break-after: avoid; }
+  tr, .tally-row, .banner { break-inside: avoid; }
+
+  @page { margin: 18mm 16mm; }
+}
+
+/* --- Document officiel : mise en page « papier » ------------------------- */
+.doc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: clamp(var(--s-5), 5vw, var(--s-9));
+  max-width: 48rem;
+  font-size: var(--text-md);
+  line-height: 1.65;
+}
+.doc__header { text-align: center; padding-bottom: var(--s-5); border-bottom: 1px solid var(--border); margin-bottom: var(--s-6); }
+.doc__org { font-size: var(--text-xs); letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--text-3); }
+.doc__title { font-size: var(--text-xl); margin-top: var(--s-3); }
+.doc h2 {
+  font-size: var(--text-lg); margin: var(--s-6) 0 var(--s-3);
+  padding-bottom: var(--s-2); border-bottom: 1px solid var(--border);
+}
+.doc p { margin-bottom: var(--s-3); }
+.doc__signatures {
+  display: grid; gap: var(--s-7); grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  margin-top: var(--s-9); font-size: var(--text-sm);
+}
+.doc__sign-line { margin-top: var(--s-8); border-top: 1px solid var(--text-3); padding-top: var(--s-2); color: var(--text-3); }
+
+@media print {
+  .doc { border: 0; padding: 0; max-width: none; }
+}

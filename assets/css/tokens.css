@@ -1,0 +1,187 @@
+/* ==========================================================================
+   Quorum — jetons de conception (design tokens)
+   Source unique de vérité pour les couleurs, l'espace, la typographie.
+   Pour rethémer une instance : ne modifier QUE ce fichier.
+   ========================================================================== */
+
+:root {
+  /* --- Typographie ------------------------------------------------------ */
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Échelle typographique — fluide, bornée (clamp min/idéal/max) */
+  --text-2xs: 0.6875rem;  /* 11px  — méta, compteurs */
+  --text-xs:  0.75rem;    /* 12px  — labels, badges */
+  --text-sm:  0.8125rem;  /* 13px  — UI dense */
+  --text-md:  0.9375rem;  /* 15px  — corps d'interface */
+  --text-lg:  1.0625rem;  /* 17px  — intertitres */
+  --text-xl:  clamp(1.125rem, 1rem + 0.6vw, 1.3125rem);
+  --text-2xl: clamp(1.375rem, 1.15rem + 1.1vw, 1.75rem);
+  --text-3xl: clamp(1.625rem, 1.3rem + 1.6vw, 2.25rem);
+
+  --leading-tight: 1.22;
+  --leading-snug: 1.38;
+  --leading-normal: 1.55;
+  --tracking-tight: -0.012em;
+  --tracking-wide: 0.06em;
+
+  /* --- Espace (base 4px) ------------------------------------------------ */
+  --s-1: 0.25rem; --s-2: 0.5rem;  --s-3: 0.75rem; --s-4: 1rem;
+  --s-5: 1.25rem; --s-6: 1.5rem;  --s-7: 2rem;    --s-8: 2.5rem;
+  --s-9: 3rem;    --s-10: 4rem;
+
+  /* --- Rayons ----------------------------------------------------------- */
+  --r-xs: 4px; --r-sm: 6px; --r-md: 8px; --r-lg: 12px; --r-xl: 16px; --r-full: 999px;
+
+  /* --- Couleurs de marque (rethémables) --------------------------------- */
+  --brand-h: 216; --brand-s: 52%; --brand-l: 28%;
+
+  /* --- Dimensions ------------------------------------------------------- */
+  --sidebar-w: 15rem;
+  --header-h: 3.5rem;
+  --content-max: 74rem;
+  --measure: 68ch;        /* longueur de ligne confortable */
+  --tap-min: 2.75rem;     /* cible tactile minimale (44px) */
+
+  /* --- Mouvement -------------------------------------------------------- */
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+  --dur-fast: 120ms; --dur: 180ms; --dur-slow: 320ms;
+
+  /* --- Élévation -------------------------------------------------------- */
+  --z-base: 1; --z-sticky: 30; --z-drawer: 50; --z-modal: 60; --z-toast: 70;
+}
+
+/* ==========================================================================
+   Thème clair (défaut) — palette « papier » chaude
+   ========================================================================== */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg:            #F6F5F2;
+  --bg-elevated:   #FCFBF9;
+  --surface:       #FFFFFF;
+  --surface-2:     #F1EFEA;
+  --surface-3:     #EDEAE4;
+
+  --border:        #E2DFD8;
+  --border-strong: #D8D4CB;
+  --border-focus:  #23406E;
+
+  --text:          #1B1A18;
+  --text-2:        #5A5853;
+  --text-3:        #6E6B64;
+  --text-inverse:  #FFFFFF;
+
+  --brand:         #23406E;
+  --brand-hover:   #1B3358;
+  --brand-active:  #152945;
+  --brand-soft:    #E7EAF1;
+  --brand-soft-bd: #C9D2E4;
+  --brand-on:      #FFFFFF;
+
+  --ok:            #1E6B45;
+  --ok-soft:       #E9EFEA;
+  --ok-soft-bd:    #CFE0D5;
+
+  --warn:          #8A5A00;
+  --warn-soft:     #F6EEDD;
+  --warn-soft-bd:  #E7D6B4;
+
+  --danger:        #A3261C;
+  --danger-hover:  #851F16;
+  --danger-soft:   #F8EAE8;
+  --danger-soft-bd:#E5C9C4;
+
+  --neutral:       #6E6B64;
+  --neutral-soft:  #F1EFEA;
+
+  --seal:          #1B1A18;   /* urne scellée : encre */
+  --track:         #EDEAE4;   /* fond de barre de progression */
+
+  --shadow-sm: 0 1px 2px rgba(27, 26, 24, 0.06);
+  --shadow:    0 2px 10px rgba(27, 26, 24, 0.07);
+  --shadow-lg: 0 12px 32px rgba(27, 26, 24, 0.12);
+  --ring:      0 0 0 3px rgba(35, 64, 110, 0.22);
+}
+
+/* ==========================================================================
+   Thème sombre — même hiérarchie, contrastes AA vérifiés
+   ========================================================================== */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:            #131211;
+  --bg-elevated:   #1A1918;
+  --surface:       #1C1B19;
+  --surface-2:     #24221F;
+  --surface-3:     #2C2A26;
+
+  --border:        #32302C;
+  --border-strong: #423F39;
+  --border-focus:  #9DB4DC;
+
+  --text:          #F3F1EC;
+  --text-2:        #BDB9B0;
+  --text-3:        #928E86;
+  --text-inverse:  #131211;
+
+  --brand:         #9DB4DC;
+  --brand-hover:   #B4C6E6;
+  --brand-active:  #C8D5EE;
+  --brand-soft:    #1F2A3B;
+  --brand-soft-bd: #33445F;
+  --brand-on:      #10192A;
+
+  --ok:            #6BC395;
+  --ok-soft:       #16281F;
+  --ok-soft-bd:    #2A4536;
+
+  --warn:          #DDAE5E;
+  --warn-soft:     #2A2113;
+  --warn-soft-bd:  #4A3A1E;
+
+  --danger:        #E58D80;
+  --danger-hover:  #F0A79B;
+  --danger-soft:   #2E1917;
+  --danger-soft-bd:#4C2A26;
+
+  --neutral:       #928E86;
+  --neutral-soft:  #24221F;
+
+  --seal:          #F3F1EC;
+  --track:         #2C2A26;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow:    0 2px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.6);
+  --ring:      0 0 0 3px rgba(157, 180, 220, 0.3);
+}
+
+/* Respect du réglage système quand l'utilisateur n'a rien choisi */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #131211; --bg-elevated: #1A1918; --surface: #1C1B19;
+    --surface-2: #24221F; --surface-3: #2C2A26;
+    --border: #32302C; --border-strong: #423F39; --border-focus: #9DB4DC;
+    --text: #F3F1EC; --text-2: #BDB9B0; --text-3: #928E86; --text-inverse: #131211;
+    --brand: #9DB4DC; --brand-hover: #B4C6E6; --brand-active: #C8D5EE;
+    --brand-soft: #1F2A3B; --brand-soft-bd: #33445F; --brand-on: #10192A;
+    --ok: #6BC395; --ok-soft: #16281F; --ok-soft-bd: #2A4536;
+    --warn: #DDAE5E; --warn-soft: #2A2113; --warn-soft-bd: #4A3A1E;
+    --danger: #E58D80; --danger-hover: #F0A79B; --danger-soft: #2E1917; --danger-soft-bd: #4C2A26;
+    --neutral: #928E86; --neutral-soft: #24221F;
+    --seal: #F3F1EC; --track: #2C2A26;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
+    --shadow: 0 2px 12px rgba(0,0,0,.45);
+    --shadow-lg: 0 12px 36px rgba(0,0,0,.6);
+    --ring: 0 0 0 3px rgba(157,180,220,.3);
+  }
+}
+
+/* Contraste renforcé : bordures plus marquées */
+@media (prefers-contrast: more) {
+  :root { --border: var(--border-strong); }
+}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Quorum — plateforme de vote</title>
+<meta name="description" content="Quorum : plateforme de vote libre et auditable pour associations, coopératives, conseils et établissements scolaires. Prototype fonctionnel, sans serveur.">
+<meta name="theme-color" content="#23406E" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131211" media="(prefers-color-scheme: dark)">
+
+<link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="./manifest.webmanifest">
+
+<!-- Polices : suppression possible sans rien casser (repli système déclaré dans tokens.css) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600&display=swap">
+
+<link rel="stylesheet" href="./assets/css/tokens.css">
+<link rel="stylesheet" href="./assets/css/base.css">
+<link rel="stylesheet" href="./assets/css/layout.css">
+<link rel="stylesheet" href="./assets/css/components.css">
+<link rel="stylesheet" href="./assets/css/print.css">
+
+<!-- Évite le clignotement clair→sombre avant le chargement des modules -->
+<script>
+  try {
+    var t = localStorage.getItem('quorum.theme');
+    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  } catch (e) { /* stockage indisponible : on garde le thème système */ }
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Aller au contenu principal</a>
+
+<div id="app" class="app" aria-busy="true">
+  <div class="view" style="margin:auto;text-align:center">
+    <p class="muted">Chargement de Quorum…</p>
+  </div>
+</div>
+
+<!-- Zone d'annonces pour les lecteurs d'écran -->
+<div id="live-region" class="sr-only" role="status" aria-live="polite"></div>
+<div id="toasts" class="toast-region"></div>
+
+<noscript>
+  <div style="max-width:36rem;margin:4rem auto;padding:1.5rem;border:1px solid #E2DFD8;border-radius:12px;background:#fff">
+    <h1 style="font-size:1.25rem;margin-bottom:.75rem">JavaScript est nécessaire</h1>
+    <p>Quorum est une application entièrement exécutée dans votre navigateur : aucun serveur ne calcule à votre place.
+       Activez JavaScript pour utiliser le prototype.</p>
+  </div>
+</noscript>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

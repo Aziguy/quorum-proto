@@ -1,0 +1,17 @@
+{
+  "name": "quorum-proto",
+  "version": "1.0.0",
+  "description": "Plateforme de vote libre et auditable pour associations, coopératives, conseils et établissements scolaires.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "private": true,
+  "homepage": "https://aziguy.github.io/quorum-proto/",
+  "repository": { "type": "git", "url": "https://github.com/Aziguy/quorum-proto.git" },
+  "comment": "Aucune dépendance : `npm install` n'est jamais nécessaire. Ce fichier n'existe que pour les raccourcis ci-dessous.",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "start": "npx --yes serve .",
+    "i18n": "node tools/i18n-report.mjs"
+  },
+  "keywords": ["vote", "élection", "association", "coopérative", "quorum", "scrutin", "agpl"]
+}

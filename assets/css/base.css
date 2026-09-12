@@ -1,0 +1,122 @@
+/* ==========================================================================
+   Quorum — réinitialisation et éléments natifs
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+* { margin: 0; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* Évite le saut de mise en page à l'apparition de l'ascenseur */
+  scrollbar-gutter: stable;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-synthesis-weight: none;
+}
+
+/* --- Titres -------------------------------------------------------------- */
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+
+p { text-wrap: pretty; }
+
+/* --- Liens --------------------------------------------------------------- */
+a {
+  color: var(--brand);
+  text-decoration-color: color-mix(in srgb, var(--brand) 35%, transparent);
+  text-underline-offset: 0.18em;
+}
+a:hover { color: var(--brand-hover); text-decoration-color: currentColor; }
+
+/* --- Media --------------------------------------------------------------- */
+img, svg, video, canvas { display: block; max-width: 100%; }
+
+/* --- Formulaires --------------------------------------------------------- */
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+button { background: none; border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+textarea { resize: vertical; }
+
+/* --- Tableaux ------------------------------------------------------------ */
+table { border-collapse: collapse; width: 100%; }
+
+/* --- Focus : jamais supprimé, toujours visible --------------------------- */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* Cibles de focus programmatique (titre de page, contenu principal) : le
+   focus est déplacé pour les lecteurs d'écran, pas pour dessiner un cadre. */
+[tabindex="-1"]:focus,
+[tabindex="-1"]:focus-visible { outline: none; }
+
+::selection { background: var(--brand-soft); color: var(--text); }
+
+/* --- Utilitaires --------------------------------------------------------- */
+
+/* Contenu réservé aux lecteurs d'écran */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* Lien d'évitement : visible uniquement au clavier */
+.skip-link {
+  position: absolute; top: -100%; left: var(--s-3); z-index: var(--z-toast);
+  padding: var(--s-2) var(--s-4); border-radius: var(--r-md);
+  background: var(--brand); color: var(--brand-on); font-weight: 600;
+}
+.skip-link:focus-visible { top: var(--s-3); }
+
+.stack > * + * { margin-top: var(--gap, var(--s-4)); }
+.mono { font-family: var(--font-mono); font-size: 0.92em; }
+.nums { font-variant-numeric: tabular-nums; }
+.measure { max-width: var(--measure); }
+.muted { color: var(--text-2); }
+.dim { color: var(--text-3); }
+.center { text-align: center; }
+.nowrap { white-space: nowrap; }
+.hidden { display: none !important; }
+.grow { flex: 1; min-width: 0; }
+
+/* --- Animations ---------------------------------------------------------- */
+@keyframes q-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.9; } }
+@keyframes q-rise  { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes q-spin  { to { transform: rotate(360deg); } }
+@keyframes q-fade  { from { opacity: 0; } to { opacity: 1; } }

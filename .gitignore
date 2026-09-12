@@ -1,0 +1,26 @@
+# Dépendances — le projet n'en a aucune à l'exécution, mais les outils
+# de développement (Playwright, serveurs statiques) peuvent en installer.
+node_modules/
+package-lock.json
+
+# Systèmes de fichiers
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+*~
+
+# Sorties locales
+*.log
+.cache/
+dist/
+coverage/
+
+# Exports de test : peuvent contenir des données personnelles réelles
+quorum-*.json
+*-corps-electoral.csv
+*-acces.csv
