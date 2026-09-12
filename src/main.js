@@ -92,9 +92,16 @@ function asHtml(value) {
  * disparaît. Sans ces deux fonctions, taper dans un champ de recherche
  * perdrait le focus au premier caractère — le filtrage étant, lui, immédiat.
  */
+const EDITABLE = /^(INPUT|TEXTAREA|SELECT)$/;
+
 function captureFocus() {
   const el = document.activeElement;
   if (!el || !el.id || !root.contains(el)) return null;
+  // Seuls les champs de saisie sont concernés. Restaurer le focus sur
+  // n'importe quel élément porterait à conséquence : le titre de page porte
+  // le même identifiant d'un écran à l'autre, et serait « restauré » au
+  // travers d'un changement de page.
+  if (!EDITABLE.test(el.tagName)) return null;
   const isText = typeof el.selectionStart === 'number';
   return { id: el.id, start: isText ? el.selectionStart : null, end: isText ? el.selectionEnd : null };
 }
@@ -135,13 +142,17 @@ function paint() {
   root.removeAttribute('aria-busy');
   const restored = restoreFocus(focused);
 
-  // Le focus ne se déplace qu'au changement de page, et jamais s'il vient
-  // d'être rendu à l'élément que l'utilisateur manipulait.
-  if (lastRenderedPath !== current.path && !restored) {
-    lastRenderedPath = current.path;
+  const pathChanged = lastRenderedPath !== current.path;
+  lastRenderedPath = current.path;
+
+  if (pathChanged) {
     window.scrollTo({ top: 0 });
-    const title = root.querySelector('#view-title') || root.querySelector('h1');
-    if (title) title.focus({ preventScroll: true });
+    // Le focus part sur le titre pour annoncer la nouvelle page — sauf s'il
+    // vient d'être rendu au champ que l'utilisateur était en train de remplir.
+    if (!restored) {
+      const title = root.querySelector('#view-title') || root.querySelector('h1');
+      if (title) title.focus({ preventScroll: true });
+    }
     view.mounted?.(ctx, root);
   }
 }
