@@ -13,6 +13,7 @@ import { formatDate, formatRelative, formatNumber } from '../core/format.js';
 import { STATUS, METHODS } from '../domain/schema.js';
 import { participationStats } from '../domain/tally.js';
 import { can } from '../domain/permissions.js';
+import { t } from '../core/i18n.js';
 
 /** Onglets d'un scrutin, filtrés selon la configuration et le statut. */
 export function electionTabs(election, config, active) {
@@ -74,14 +75,14 @@ export function electionSummary(election) {
 /** En-tête commun : référence, statut, titre, résumé. */
 export function electionHeader(election, { actions = '' } = {}) {
   return html`
-    <a class="back-link" href="#/scrutins">${raw(icon('chevronLeft'))} Tous les scrutins</a>
+    <a class="back-link" href="#/scrutins">${raw(icon('chevronLeft'))} ${t('nav.elections', 'Tous les scrutins')}</a>
     <header class="page-head">
       <div class="page-head__text">
         <div class="row row--tight" style="margin-bottom:var(--s-2)">
           ${statusBadge(election.status)}
           <span class="mono dim">${election.ref}</span>
         </div>
-        <h1 id="view-title" tabindex="-1">${election.title || 'Scrutin sans intitulé'}</h1>
+        <h1 id="view-title" tabindex="-1">${election.title || t('election.untitled', 'Scrutin sans intitulé')}</h1>
         <p>${electionSummary(election)}</p>
       </div>
       ${actions ? html`<div class="page-head__actions no-print">${actions}</div>` : ''}

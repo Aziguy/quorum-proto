@@ -24,9 +24,49 @@ export const en = {
   'nav.settings': 'Settings',
   'nav.about': 'Design note',
   'nav.close': 'Close navigation',
+  'nav.section.help': 'Help',
+  'nav.voterArea': 'Voter area',
+  'nav.localOnly': 'Data kept in this browser only.',
 
   // --- Common --------------------------------------------------------------
   'common.continue': 'Continue',
+
+  // --- Dashboard -----------------------------------------------------------
+  'dashboard.title': 'Ballots',
+  'dashboard.lead': '{n} ballot(s) on record.',
+  'dashboard.leadOrg': '{org} — {n} ballot(s) on record.',
+  'dashboard.emptyLead': '{app} keeps your ballots in this browser, and nowhere else.',
+  'dashboard.empty.title': 'No ballots yet',
+  'dashboard.empty.body': 'Create your first ballot, or start from a ready-made template: annual general meeting, board election, class council.',
+  'dashboard.emptyCategory': 'No ballots in this category.',
+  'dashboard.create': 'Create a ballot',
+  'dashboard.fromTemplate': 'Start from a template',
+  'dashboard.seats': '{n} seats',
+  'dashboard.closesIn': 'closes {when}',
+  'dashboard.closedOn': 'closed on {date}',
+  'dashboard.neverOpened': 'never opened',
+  'dashboard.stat.open': 'open ballots',
+  'dashboard.stat.voters': 'votes recorded',
+  'dashboard.stat.outOf': 'of {n} registered',
+  'dashboard.stat.turnout': 'average turnout',
+  'dashboard.stat.turnoutHint': 'open ballots only',
+  'dashboard.stat.closed': 'closed ballots',
+  'dashboard.stat.closedHint': 'final counts',
+
+  // --- Statuses and filters ------------------------------------------------
+  'status.draft': 'Draft',
+  'status.open': 'Open',
+  'status.closed': 'Closed',
+  'status.archived': 'Archived',
+  'filter.all': 'All',
+  'common.filter': 'Filter',
+  'election.untitled': 'Untitled ballot',
+
+  // --- Quorum --------------------------------------------------------------
+  'quorum.none': 'no quorum',
+  'quorum.met': 'quorum met',
+  'quorum.missed': 'quorum missed',
+  'quorum.remaining': '{n} votes short of quorum',
 
   // --- Voter: access -------------------------------------------------------
   'voter.access.title': 'Open my ballot paper',

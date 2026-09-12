@@ -8,6 +8,11 @@
  * Relève les appels t('clé', 'texte français') dans src/, puis les compare au
  * fichier de langue. Le français est la langue source : ses textes vivent dans
  * le code, il n'a donc pas de rapport.
+ *
+ * Limite connue : les clés passées par variable — t(entry.key, entry.label) —
+ * échappent à l'extraction. Elles apparaissent donc comme « obsolètes » alors
+ * qu'elles sont bien utilisées. Les fichiers concernés les listent en
+ * commentaire ; la section ci-dessous est indicative, pas normative.
  */
 
 import { readdir, readFile } from 'node:fs/promises';
@@ -61,7 +66,7 @@ if (missing.length) {
 }
 
 if (stale.length) {
-  console.log('Clés obsolètes, absentes du code :\n');
+  console.log('Clés sans appel direct — vérifier avant de supprimer :\n');
   for (const key of stale) console.log(`  ${key}`);
   console.log();
 }

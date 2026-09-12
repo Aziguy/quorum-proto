@@ -12,16 +12,17 @@ import {
   btn, statusBadge, segmented, emptyState, meter, pageHead, statGrid, badge,
 } from '../ui/components.js';
 import { formatNumber, formatPercent, formatRelative, formatDate } from '../core/format.js';
+import { t } from '../core/i18n.js';
 import { STATUS, METHODS } from '../domain/schema.js';
 import { participationStats } from '../domain/tally.js';
 import { evaluateQuorum } from '../domain/quorum.js';
 import { setUi } from '../app.js';
 
-const FILTERS = [
-  { id: 'all', label: 'Tous' },
-  { id: STATUS.DRAFT, label: 'Brouillons' },
-  { id: STATUS.OPEN, label: 'En cours' },
-  { id: STATUS.CLOSED, label: 'Clos' },
+const filters = () => [
+  { id: 'all', label: t('filter.all', 'Tous') },
+  { id: STATUS.DRAFT, label: t('status.draft', 'Brouillon') },
+  { id: STATUS.OPEN, label: t('status.open', 'En cours') },
+  { id: STATUS.CLOSED, label: t('status.closed', 'Clos') },
 ];
 
 /** Destination naturelle d'un scrutin selon son statut. */
@@ -38,21 +39,24 @@ function electionCard(election) {
 
   const meta = [
     method.label,
-    method.pick === 'many' && method.id !== 'approval' ? `${election.seats} sièges` : null,
+    method.pick === 'many' && method.id !== 'approval'
+      ? t('dashboard.seats', '{n} sièges', { n: election.seats }) : null,
     election.status === STATUS.OPEN && election.closesAt
-      ? `clôture ${formatRelative(election.closesAt)}`
+      ? t('dashboard.closesIn', 'clôture {when}', { when: formatRelative(election.closesAt) })
       : election.status === STATUS.CLOSED && election.seal
-        ? `clos le ${formatDate(election.seal.at, 'short')}`
-        : election.status === STATUS.DRAFT ? 'jamais ouvert' : null,
+        ? t('dashboard.closedOn', 'clos le {date}', { date: formatDate(election.seal.at, 'short') })
+        : election.status === STATUS.DRAFT ? t('dashboard.neverOpened', 'jamais ouvert') : null,
   ].filter(Boolean).join(' · ');
 
   const quorumChip = !quorum.enabled
-    ? badge('sans quorum', 'neutral')
+    ? badge(t('quorum.none', 'sans quorum'), 'neutral')
     : quorum.met
-      ? badge('quorum atteint', 'ok')
+      ? badge(t('quorum.met', 'quorum atteint'), 'ok')
       : election.status === STATUS.CLOSED
-        ? badge('quorum manqué', 'danger')
-        : badge(`${formatNumber(quorum.required - quorum.reached)} voix du quorum`, 'warn');
+        ? badge(t('quorum.missed', 'quorum manqué'), 'danger')
+        : badge(t('quorum.remaining', '{n} voix du quorum', {
+          n: formatNumber(quorum.required - quorum.reached),
+        }), 'warn');
 
   return html`<a class="card-link" href="${electionHref(election)}">
     <div class="card-link__body">
@@ -61,7 +65,7 @@ function electionCard(election) {
         <span class="mono dim" style="font-size:var(--text-xs)">${election.ref}</span>
       </div>
       <div style="font-size:var(--text-lg);font-weight:600;line-height:1.3;margin-bottom:var(--s-1)">
-        ${election.title || 'Scrutin sans intitulé'}</div>
+        ${election.title || t('election.untitled', 'Scrutin sans intitulé')}</div>
       <div class="dim" style="font-size:var(--text-sm)">${meta}</div>
     </div>
 
@@ -97,45 +101,59 @@ export default {
 
     if (!elections.length) {
       return html`<div class="view">
-        ${pageHead({ title: 'Scrutins', lead: `${config.app.name} conserve vos scrutins dans ce navigateur, et nulle part ailleurs.` })}
+        ${pageHead({
+    title: t('dashboard.title', 'Scrutins'),
+    lead: t('dashboard.emptyLead', '{app} conserve vos scrutins dans ce navigateur, et nulle part ailleurs.', { app: config.app.name }),
+  })}
         ${emptyState({
-    title: 'Aucun scrutin pour l’instant',
-    body: "Créez votre premier scrutin, ou partez d'un modèle prêt à l'emploi : assemblée générale annuelle, élection du bureau, conseil de classe.",
-    actions: html`${btn({ label: 'Créer un scrutin', href: '#/scrutins/nouveau', variant: 'primary', iconName: 'plus' })}
-      ${btn({ label: 'Partir d’un modèle', href: '#/modeles' })}`,
+    title: t('dashboard.empty.title', 'Aucun scrutin pour l’instant'),
+    body: t('dashboard.empty.body', "Créez votre premier scrutin, ou partez d'un modèle prêt à l'emploi : assemblée générale annuelle, élection du bureau, conseil de classe."),
+    actions: html`${btn({ label: t('dashboard.create', 'Créer un scrutin'), href: '#/scrutins/nouveau', variant: 'primary', iconName: 'plus' })}
+      ${btn({ label: t('dashboard.fromTemplate', 'Partir d’un modèle'), href: '#/modeles' })}`,
   })}
       </div>`;
     }
 
     return html`<div class="view">
       ${pageHead({
-    title: 'Scrutins',
+    title: t('dashboard.title', 'Scrutins'),
     lead: config.organization.name
-      ? `${config.organization.name} — ${formatNumber(elections.length)} scrutin(s) enregistré(s).`
-      : `${formatNumber(elections.length)} scrutin(s) enregistré(s).`,
-    actions: btn({ label: 'Nouveau scrutin', href: '#/scrutins/nouveau', variant: 'primary', iconName: 'plus' }),
+      ? t('dashboard.leadOrg', '{org} — {n} scrutin(s) enregistré(s).', {
+        org: config.organization.name, n: formatNumber(elections.length),
+      })
+      : t('dashboard.lead', '{n} scrutin(s) enregistré(s).', { n: formatNumber(elections.length) }),
+    actions: btn({
+      label: t('nav.new', 'Nouveau scrutin'), href: '#/scrutins/nouveau',
+      variant: 'primary', iconName: 'plus',
+    }),
   })}
 
       ${open.length ? statGrid([
-    { value: formatNumber(open.length), label: 'scrutins ouverts' },
-    { value: formatNumber(totalVoters), label: 'votants enregistrés', hint: `sur ${formatNumber(totalRegistered)} inscrits` },
+    { value: formatNumber(open.length), label: t('dashboard.stat.open', 'scrutins ouverts') },
+    {
+      value: formatNumber(totalVoters),
+      label: t('dashboard.stat.voters', 'votants enregistrés'),
+      hint: t('dashboard.stat.outOf', 'sur {n} inscrits', { n: formatNumber(totalRegistered) }),
+    },
     {
       value: formatPercent(totalRegistered ? totalVoters / totalRegistered : 0),
-      label: 'participation moyenne',
+      label: t('dashboard.stat.turnout', 'participation moyenne'),
+      hint: t('dashboard.stat.turnoutHint', 'scrutins ouverts uniquement'),
     },
     {
       value: formatNumber(elections.filter((e) => e.status === STATUS.CLOSED).length),
-      label: 'scrutins clos', hint: 'décomptes définitifs',
+      label: t('dashboard.stat.closed', 'scrutins clos'),
+      hint: t('dashboard.stat.closedHint', 'décomptes définitifs'),
     },
   ]) : ''}
 
       <div style="margin:var(--s-5) 0">
-        ${segmented({ items: FILTERS, value: filter, act: 'setFilter', label: 'Filtrer' })}
+        ${segmented({ items: filters(), value: filter, act: 'setFilter', label: t('common.filter', 'Filtrer') })}
       </div>
 
       ${visible.length
     ? html`<div class="stack">${visible.map(electionCard)}</div>`
-    : html`<div class="empty"><p style="margin:0">Aucun scrutin dans cette catégorie.</p></div>`}
+    : html`<div class="empty"><p style="margin:0">${t('dashboard.emptyCategory', 'Aucun scrutin dans cette catégorie.')}</p></div>`}
     </div>`;
   },
 

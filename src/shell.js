@@ -8,8 +8,9 @@
 
 import { html, raw } from './core/dom.js';
 import { icon } from './ui/icons.js';
-import { t } from './core/i18n.js';
+import { t, getLocale, LOCALES } from './core/i18n.js';
 import { STATUS, ROLES } from './domain/schema.js';
+import { currentTheme } from './app.js';
 
 function navLink({ href, label, iconName, active, count }) {
   return html`<a class="nav-item" href="${href}" ${raw(active ? 'aria-current="page"' : '')}>
@@ -56,23 +57,35 @@ export function navigation(state, path) {
     </div>
 
     <div class="nav-group">
-      <p class="nav-group__title">Aide</p>
-      ${navLink({ href: '#/vote', label: 'Espace votant', iconName: 'ballotBox', active: isActive('/vote') })}
+      <p class="nav-group__title">${t('nav.section.help', 'Aide')}</p>
+      ${navLink({ href: '#/vote', label: t('nav.voterArea', 'Espace votant'), iconName: 'ballotBox', active: isActive('/vote') })}
       ${navLink({ href: '#/a-propos', label: t('nav.about', 'Note de conception'), iconName: 'info', active: isActive('/a-propos') })}
     </div>
 
     <div class="card card--flat" style="margin-top:var(--s-6);padding:var(--s-3)">
       <p class="choice__sub" style="font-size:var(--text-2xs)">
         ${config.app.name} ${config.app.version} · ${config.app.license}<br>
-        Données conservées dans ce navigateur uniquement.
+        ${t('nav.localOnly', 'Données conservées dans ce navigateur uniquement.')}
       </p>
     </div>
   </nav>`;
 }
 
+/**
+ * Trois états de thème, trois icônes distinctes. Avec seulement un soleil et
+ * une lune, « système » et « clair » partagent la même image : un clic sur
+ * trois semble alors sans effet.
+ */
+const THEMES = {
+  system: { icon: 'themeAuto', label: 'Thème : système' },
+  light: { icon: 'sun', label: 'Thème : clair' },
+  dark: { icon: 'moon', label: 'Thème : sombre' },
+};
+
 export function header(state) {
   const { config, ui } = state;
-  const themeIcon = (document.documentElement.dataset.theme || '') === 'dark' ? 'sun' : 'moon';
+  const theme = THEMES[currentTheme()] || THEMES.system;
+  const locale = getLocale();
 
   return html`<header class="app-header">
     <button type="button" class="btn btn--ghost btn--icon nav-toggle" data-act="toggleNav"
@@ -98,10 +111,13 @@ export function header(state) {
       </select>
 
       <button type="button" class="btn btn--ghost btn--icon" data-act="cycleTheme"
-        aria-label="Changer de thème" title="Changer de thème">${raw(icon(themeIcon, { size: 17 }))}</button>
+        aria-label="${theme.label} — changer" title="${theme.label}">${raw(icon(theme.icon, { size: 17 }))}</button>
 
-      <button type="button" class="btn btn--ghost btn--icon" data-act="cycleLocale"
-        aria-label="Changer de langue" title="Changer de langue">${raw(icon('globe', { size: 17 }))}</button>
+      <button type="button" class="btn btn--ghost" data-act="cycleLocale"
+        style="gap:var(--s-1);padding-inline:var(--s-2)"
+        aria-label="Langue : ${LOCALES[locale].label} — changer"
+        title="Langue : ${LOCALES[locale].label}">${raw(icon('globe', { size: 17 }))}<span
+        style="font-size:var(--text-2xs);font-weight:700;letter-spacing:.04em">${locale.toUpperCase()}</span></button>
     </div>
   </header>`;
 }

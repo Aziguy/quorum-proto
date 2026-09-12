@@ -40,6 +40,7 @@ const PATHS = {
   settings: '<circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6M8 12.6v1.6M14.2 8h-1.6M3.4 8H1.8M12.4 3.6l-1.1 1.1M4.7 11.3l-1.1 1.1M12.4 12.4l-1.1-1.1M4.7 4.7L3.6 3.6"/>',
   sun: '<circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M14.5 8h-1.6M3.1 8H1.5M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1M12.6 12.6l-1.1-1.1M4.5 4.5L3.4 3.4"/>',
   moon: '<path d="M13 9.5A5.6 5.6 0 016.5 3a5.8 5.8 0 100 11 5.7 5.7 0 006.5-4.5z"/>',
+  themeAuto: '<circle cx="8" cy="8" r="5.8"/><path d="M8 2.2a5.8 5.8 0 000 11.6z" fill="currentColor" stroke="none"/>',
   globe: '<circle cx="8" cy="8" r="5.8"/><path d="M2.2 8h11.6M8 2.2c1.6 1.7 2.4 3.7 2.4 5.8S9.6 12.1 8 13.8c-1.6-1.7-2.4-3.7-2.4-5.8S6.4 3.9 8 2.2z"/>',
   alert: '<path d="M8 2.8L14 13H2z"/><path d="M8 6.4v3M8 11.2h.01"/>',
   info: '<circle cx="8" cy="8" r="5.8"/><path d="M8 7.2v4M8 4.8h.01"/>',

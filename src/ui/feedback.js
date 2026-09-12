@@ -23,6 +23,9 @@ export function toast(message, tone = 'info', { duration = 4000 } = {}) {
   node.querySelector('.toast__close').addEventListener('click', () => node.remove());
 
   region.appendChild(node);
+  // Au-delà de trois, les notifications masquent le contenu qu'elles commentent.
+  while (region.children.length > 3) region.firstElementChild.remove();
+
   announce(message);
   setTimeout(() => node.remove(), duration);
 }

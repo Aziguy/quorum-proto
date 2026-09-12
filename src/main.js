@@ -120,6 +120,8 @@ function paint() {
 
 /* --- Distribution des événements -------------------------------------------- */
 
+const THEME_LABELS = { system: 'système', light: 'clair', dark: 'sombre' };
+
 /** Actions disponibles dans toutes les vues. */
 const GLOBAL_ACTIONS = {
   toggleNav: () => setUi({ navOpen: !store.get().ui.navOpen }),
@@ -130,7 +132,7 @@ const GLOBAL_ACTIONS = {
     const next = order[(order.indexOf(currentTheme()) + 1) % order.length];
     applyTheme(next);
     store.refresh();
-    toast(`Thème : ${{ system: 'système', light: 'clair', dark: 'sombre' }[next]}`);
+    toast(`Thème : ${THEME_LABELS[next]}`);
   },
 
   cycleLocale() {
@@ -146,9 +148,18 @@ const GLOBAL_ACTIONS = {
   },
 };
 
+/**
+ * Contrôles qui gèrent eux-mêmes le clic. Les intercepter reviendrait à
+ * empêcher l'ouverture d'une liste déroulante ou le placement du curseur —
+ * et le re-rendu qui suivrait remplacerait l'élément sous le doigt.
+ * Ces éléments sont servis par les événements `change` et `input`.
+ */
+const SELF_HANDLED = new Set(['SELECT', 'INPUT', 'TEXTAREA', 'OPTION']);
+
 function dispatch(event, type) {
   const el = event.target.closest?.('[data-act]');
   if (!el) return;
+  if (type === 'click' && SELF_HANDLED.has(el.tagName)) return;
   const name = el.dataset.act;
   const view = activeView();
   const handler = view.actions?.[name] || GLOBAL_ACTIONS[name];

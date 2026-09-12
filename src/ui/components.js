@@ -11,6 +11,7 @@ import { html, raw, esc, cx, attrs } from '../core/dom.js';
 import { icon } from './icons.js';
 import { formatPercent, formatNumber, share } from '../core/format.js';
 import { STATUS } from '../domain/schema.js';
+import { t } from '../core/i18n.js';
 
 /* --- Boutons --------------------------------------------------------------- */
 
@@ -39,16 +40,21 @@ export function btn({
 
 /* --- Pastilles et états ---------------------------------------------------- */
 
+/**
+ * Les clés sont ici passées par variable : l'extracteur de tools/i18n-report.mjs
+ * ne les voit donc pas. Elles sont listées pour les traducteurs —
+ * status.draft, status.open, status.closed, status.archived.
+ */
 const STATUS_TONES = {
-  [STATUS.DRAFT]: { tone: 'neutral', label: 'Brouillon' },
-  [STATUS.OPEN]: { tone: 'brand', label: 'En cours' },
-  [STATUS.CLOSED]: { tone: 'seal', label: 'Clos' },
-  [STATUS.ARCHIVED]: { tone: 'neutral', label: 'Archivé' },
+  [STATUS.DRAFT]: { tone: 'neutral', key: 'status.draft', label: 'Brouillon' },
+  [STATUS.OPEN]: { tone: 'brand', key: 'status.open', label: 'En cours' },
+  [STATUS.CLOSED]: { tone: 'seal', key: 'status.closed', label: 'Clos' },
+  [STATUS.ARCHIVED]: { tone: 'neutral', key: 'status.archived', label: 'Archivé' },
 };
 
 export function statusBadge(status) {
-  const { tone, label } = STATUS_TONES[status] || STATUS_TONES.draft;
-  return html`<span class="badge badge--${tone}">${label}</span>`;
+  const entry = STATUS_TONES[status] || STATUS_TONES[STATUS.DRAFT];
+  return html`<span class="badge badge--${entry.tone}">${t(entry.key, entry.label)}</span>`;
 }
 
 export function badge(label, tone = 'neutral') {
