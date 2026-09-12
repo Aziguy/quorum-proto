@@ -138,3 +138,54 @@ français : une traduction partielle ne casse jamais l'interface.
 typographie, rayons, élévations. Les trois autres feuilles n'utilisent que des
 variables. Rethémer une instance, c'est modifier un seul fichier — et le thème
 sombre est déjà défini, y compris pour le réglage « système ».
+
+## Listes : recherche, tri, pagination
+
+Un seul mécanisme sert toutes les listes de l'application — scrutins, corps
+électoral, accès, émargement, pouvoirs, journal d'audit.
+
+```
+core/collection.js     search() · sortItems() · paginate() · pageWindow()
+                       fonctions pures, aucune dépendance
+        │
+ui/components.js       searchInput() · pagination() · sortHeader() · noResults()
+        │
+app.js                 listState(id, defaults) · setList(id, patch)
+        │
+main.js                actions globales listSearch / listPage / listSize / listSort
+```
+
+Une vue n'écrit donc aucune action de liste : elle déclare un identifiant,
+appelle `listState`, filtre, et rend les composants.
+
+```js
+const LIST = 'electorate';
+const list = listState(LIST);
+const found = search(items, list.q, [(v) => v.name, (v) => v.email]);
+const page = paginate(sortItems(found, SORTS[list.sort], list.direction), list);
+```
+
+### Choix retenus
+
+- **Recherche insensible aux accents et aux séparateurs.** « benedicte » trouve
+  « Bénédicte » : une liste importée d'un tableur n'est jamais saisie deux fois
+  de la même manière.
+- **ET entre les termes**, pas OU. On affine une liste, on ne l'élargit pas :
+  « awa bienf » ne doit renvoyer que les Awa bienfaiteurs.
+- **Retour à la première page** dès qu'un filtre change. Rester en page 7 d'un
+  résultat qui n'en compte plus que deux afficherait un écran vide.
+- **Page hors bornes ramenée dans les bornes.** Supprimer le dernier élément
+  d'une page ne doit pas produire une liste vide.
+- **L'état vit dans l'interface, pas dans le stockage.** Une recherche est une
+  intention du moment ; la retrouver au prochain démarrage serait déroutant.
+
+### Conservation du focus
+
+Filtrer re-rend la vue, donc détruit le champ de saisie. `paint()` relève
+l'élément focalisé et la position du curseur avant le rendu, puis les restaure
+après. Sans cela, taper dans une recherche perdrait le focus au premier
+caractère — et insérer un caractère au milieu d'un mot renverrait le curseur
+en fin de ligne.
+
+Le mécanisme est générique : il vaut pour tout champ portant un `id`, pas
+seulement pour la recherche.

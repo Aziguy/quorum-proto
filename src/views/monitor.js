@@ -7,7 +7,11 @@
  */
 
 import { html } from '../core/dom.js';
-import { btn, card, banner, statGrid, quorumGauge, table, keyValues } from '../ui/components.js';
+import {
+  btn, card, banner, statGrid, quorumGauge, table, keyValues,
+  searchInput, pagination, noResults,
+} from '../ui/components.js';
+import { search as searchItems, paginate } from '../core/collection.js';
 import { formatNumber, formatPercent, formatDate, formatRelative } from '../core/format.js';
 import { STATUS } from '../domain/schema.js';
 import { participationStats } from '../domain/tally.js';
@@ -17,32 +21,52 @@ import {
 } from '../domain/election.js';
 import { emptyChoice, toggleOption } from '../domain/ballot.js';
 import { can } from '../domain/permissions.js';
-import { getElection, applyOperation } from '../app.js';
+import { getElection, applyOperation, listState } from '../app.js';
 import { toast, confirmDialog } from '../ui/feedback.js';
 import { electionHeader, electionTabs, missingElection, sealBanner, forbidden } from './_shared.js';
 
-/** Liste d'émargement : qui a voté, et quand. Jamais ce qui a été voté. */
+const ROSTER = 'roster';
+
+/**
+ * Liste d'émargement : qui a voté, et quand. Jamais ce qui a été voté.
+ * Elle est paginée et interrogeable, car c'est le document que les scrutateurs
+ * consultent en séance pour répondre à « untel a-t-il déjà voté ? ».
+ */
 function rosterCard(election) {
-  const recent = [...election.roster].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 12);
+  const list = listState(ROSTER);
+  const ordered = [...election.roster].sort((a, b) => new Date(b.at) - new Date(a.at));
+  const found = searchItems(ordered, list.q, [(entry) => entry.name]);
+  const page = paginate(found, list);
+
+  const row = (entry) => [
+    html`<span class="table__main">${entry.name}</span>`,
+    html`<span class="nums">${formatDate(entry.at, 'seconds')}</span>`,
+    entry.channel === 'code' ? 'code remis en main propre' : 'lien par e-mail',
+    entry.proxyFor?.length
+      ? html`<span class="badge badge--brand">+${entry.proxyFor.length}</span>`
+      : html`<span class="dim">—</span>`,
+  ];
+
   return card({
     title: 'Liste d’émargement',
     hint: 'Qui a voté, et à quelle heure. Jamais ce qui a été voté.',
-    body: recent.length
-      ? html`${table({
-    head: ['Électeur', 'Heure', 'Accès', 'Pouvoirs'],
-    caption: 'Derniers émargements',
-    rows: recent.map((entry) => [
-      html`<span class="table__main">${entry.name}</span>`,
-      html`<span class="nums">${formatDate(entry.at, 'seconds')}</span>`,
-      entry.channel === 'code' ? 'code remis en main propre' : 'lien par e-mail',
-      entry.proxyFor?.length
-        ? html`<span class="badge badge--brand">+${entry.proxyFor.length}</span>`
-        : html`<span class="dim">—</span>`,
-    ]),
+    body: election.roster.length
+      ? html`
+        <div class="list-toolbar">
+          ${searchInput({
+    list: ROSTER, value: list.q,
+    placeholder: 'Cette personne a-t-elle voté ?',
+    label: 'Rechercher un émargement', width: '20rem',
   })}
-      ${election.roster.length > recent.length
-    ? html`<p class="field__hint">${formatNumber(election.roster.length - recent.length)} émargements antérieurs non affichés.</p>`
-    : ''}`
+        </div>
+        ${page.total
+    ? html`${table({
+    head: ['Électeur', 'Heure', 'Accès', 'Pouvoirs'],
+    caption: 'Liste d’émargement',
+    rows: page.items.map(row),
+  })}
+            ${pagination({ list: ROSTER, ...page, noun: 'émargements', nounOne: 'émargement' })}`
+    : noResults({ list: ROSTER, query: list.q, noun: 'émargement' })}`
       : html`<p class="muted">Personne n'a encore voté.</p>`,
   });
 }

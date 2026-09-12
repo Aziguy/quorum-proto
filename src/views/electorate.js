@@ -7,17 +7,31 @@
  */
 
 import { html } from '../core/dom.js';
-import { btn, banner, table, statGrid, segmented } from '../ui/components.js';
+import {
+  btn, banner, table, statGrid, segmented, searchInput, pagination, noResults,
+  sortHeader, ariaSort,
+} from '../ui/components.js';
+import { search as searchItems, paginate, sortItems } from '../core/collection.js';
 import { formatNumber, formatDate, initials } from '../core/format.js';
 import { STATUS, makeVoter } from '../domain/schema.js';
 import { removeVoter, addVoters, proxiesHeldBy } from '../domain/election.js';
 import { participationStats } from '../domain/tally.js';
 import { can } from '../domain/permissions.js';
-import { getElection, applyOperation, setUi } from '../app.js';
+import { getElection, applyOperation, setUi, listState } from '../app.js';
 import { toast, confirmDialog, promptDialog } from '../ui/feedback.js';
 import { download, pickFile } from '../core/storage.js';
 import { toCsv, parseTable } from '../core/csv.js';
 import { electionHeader, electionTabs, missingElection } from './_shared.js';
+
+const LIST = 'electorate';
+
+/** Colonnes triables : une clé, un accesseur. */
+const SORTS = {
+  name: (v) => v.name,
+  college: (v) => v.college || '',
+  weight: (v) => v.weight,
+  signed: (v) => (v.tokenUsed ? 1 : 0),
+};
 
 const FILTERS = [
   { id: 'all', label: 'Tous' },
@@ -65,16 +79,21 @@ export default {
     const stats = participationStats(election);
     const editable = election.status === STATUS.DRAFT && can(ctx.ui.role, 'electorate.manage');
     const filter = ctx.ui.electorateFilter || 'all';
-    const search = (ctx.ui.electorateSearch || '').toLowerCase();
+    const list = listState(LIST);
 
-    const voters = election.electorate.filter((voter) => {
-      if (search && !`${voter.name} ${voter.email} ${voter.college}`.toLowerCase().includes(search)) return false;
+    const filtered = election.electorate.filter((voter) => {
       if (filter === 'voted') return voter.tokenUsed;
       if (filter === 'pending') return !voter.tokenUsed;
       if (filter === 'nomail') return !voter.email;
       if (filter === 'proxy') return proxiesHeldBy(election, voter.id).length > 0;
       return true;
     });
+
+    const found = searchItems(filtered, list.q, [
+      (v) => v.name, (v) => v.email, (v) => v.college, (v) => v.phone,
+    ]);
+    const ordered = list.sort ? sortItems(found, SORTS[list.sort], list.direction) : found;
+    const page = paginate(ordered, list);
 
     const withoutEmail = election.electorate.filter((v) => !v.email).length;
     const colleges = new Set(election.electorate.map((v) => v.college).filter(Boolean));
@@ -112,22 +131,32 @@ export default {
       : '',
   }) : ''}
 
-      <div class="row" style="margin:var(--s-5) 0">
-        <input class="input grow" type="search" placeholder="Rechercher un nom, une adresse, un collège…"
-          value="${ctx.ui.electorateSearch || ''}" data-act="search" aria-label="Rechercher un électeur"
-          style="max-width:22rem">
+      <div class="list-toolbar" style="margin-top:var(--s-5)">
+        ${searchInput({
+    list: LIST, value: list.q,
+    placeholder: 'Rechercher un nom, une adresse, un collège…',
+    label: 'Rechercher un électeur',
+  })}
         ${segmented({ items: FILTERS, value: filter, act: 'setElectorateFilter', label: 'Filtrer' })}
       </div>
 
-      ${voters.length ? html`
+      ${page.total ? html`
         ${table({
-    head: ['Électeur', 'Collège', ctx.config.vocabulary.unit, 'Accès', 'Émargement', ''],
+    head: [
+      { content: sortHeader({ list: LIST, column: 'name', label: 'Électeur', state: list }), sort: ariaSort(list, 'name') },
+      { content: sortHeader({ list: LIST, column: 'college', label: 'Collège', state: list }), sort: ariaSort(list, 'college') },
+      { content: sortHeader({ list: LIST, column: 'weight', label: ctx.config.vocabulary.unit, state: list }), sort: ariaSort(list, 'weight') },
+      'Accès',
+      { content: sortHeader({ list: LIST, column: 'signed', label: 'Émargement', state: list }), sort: ariaSort(list, 'signed') },
+      '',
+    ],
     caption: 'Corps électoral',
-    rows: voters.slice(0, 80).map((voter) => voterRow(election, voter, editable)),
+    rows: page.items.map((voter) => voterRow(election, voter, editable)),
   })}
-        ${voters.length > 80 ? html`<p class="field__hint">${formatNumber(voters.length - 80)} électeurs
-          supplémentaires non affichés. Affinez la recherche ou exportez la liste.</p>` : ''}
-      ` : html`<div class="empty"><p style="margin:0">Aucun électeur ne correspond.</p></div>`}
+        ${pagination({ list: LIST, ...page, noun: 'électeurs', nounOne: 'électeur' })}
+      ` : list.q
+    ? noResults({ list: LIST, query: list.q, noun: 'électeur' })
+    : html`<div class="empty"><p style="margin:0">Aucun électeur dans cette catégorie.</p></div>`}
 
       <p class="field__hint" style="margin-top:var(--s-5)">
         Les adresses e-mail ne servent qu'à l'envoi des accès. Elles sont supprimées
@@ -138,16 +167,8 @@ export default {
   },
 
   actions: {
-    // La recherche ne re-rend pas le champ : elle filtre puis rafraîchit.
-    search(ctx, { el }) {
-      setUi({ electorateSearch: el.value });
-      // Le champ est re-rendu avec sa valeur : on lui rend le focus et le curseur.
-      queueMicrotask(() => {
-        const field = document.querySelector('input[data-act="search"]');
-        if (field) { field.focus(); field.setSelectionRange(field.value.length, field.value.length); }
-      });
-    },
-
+    // Recherche, pagination et tri sont assurés par les actions globales
+    // (src/main.js) : cette vue n'a que son filtre par catégorie à gérer.
     setElectorateFilter: (ctx, { data }) => setUi({ electorateFilter: data.value }),
 
     async import(ctx) {

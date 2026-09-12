@@ -7,13 +7,16 @@
  */
 
 import { html } from '../core/dom.js';
-import { btn, card, banner, statGrid } from '../ui/components.js';
+import { btn, card, banner, statGrid, searchInput, noResults } from '../ui/components.js';
+import { search as searchItems } from '../core/collection.js';
 import { initials } from '../core/format.js';
 import { STATUS, makeOption } from '../domain/schema.js';
 import { can } from '../domain/permissions.js';
-import { getElection, setElection } from '../app.js';
+import { getElection, setElection, listState } from '../app.js';
 import { toast, promptDialog } from '../ui/feedback.js';
 import { electionHeader, electionTabs, missingElection } from './_shared.js';
+
+const LIST = 'candidacies';
 
 const STATES = {
   validated: { label: 'Validée', tone: 'ok' },
@@ -60,6 +63,14 @@ export default {
     const validated = election.candidacies.filter((c) => c.status === 'validated');
     const onBallot = new Set(election.options.map((o) => o.label));
 
+    // Un congrès peut aligner des dizaines de candidatures : la recherche
+    // apparaît dès qu'elle devient utile, et reste absente sinon.
+    const list = listState(LIST);
+    const searchable = election.candidacies.length > 6;
+    const found = searchItems(election.candidacies, searchable ? list.q : '', [
+      (c) => c.name, (c) => c.meta, (c) => c.statement,
+    ]);
+
     return html`<div class="view">
       ${electionHeader(election, {
     actions: editable
@@ -84,11 +95,21 @@ export default {
   ])}
       </div>
 
-      ${election.candidacies.length
-    ? html`<div class="grid grid--2">${election.candidacies.map((candidacy) => candidacyCard(candidacy, {
+      ${searchable ? html`<div class="list-toolbar">
+        ${searchInput({
+    list: LIST, value: list.q,
+    placeholder: 'Rechercher un nom, une section, une profession de foi…',
+    label: 'Rechercher une candidature',
+  })}
+      </div>` : ''}
+
+      ${found.length
+    ? html`<div class="grid grid--2">${found.map((candidacy) => candidacyCard(candidacy, {
       editable, onBallot: onBallot.has(candidacy.name),
     }))}</div>`
-    : html`<div class="empty"><p style="margin:0">Aucune candidature déposée sur ce scrutin.</p></div>`}
+    : list.q && searchable
+      ? noResults({ list: LIST, query: list.q, noun: 'candidature' })
+      : html`<div class="empty"><p style="margin:0">Aucune candidature déposée sur ce scrutin.</p></div>`}
     </div>`;
   },
 

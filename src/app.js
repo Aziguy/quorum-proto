@@ -20,6 +20,7 @@ export const store = createStore({
   elections: [],
   directory: [],
   ui: {
+    lists: {},
     navOpen: false,
     role: 'organizer',
     filter: 'all',
@@ -183,6 +184,32 @@ export function updateConfig(patch) {
 
 export function setUi(patch) {
   store.update((state) => ({ ui: { ...state.ui, ...patch } }));
+}
+
+/* --- État des listes --------------------------------------------------------
+   Recherche, page et tri sont conservés par liste, dans l'état d'interface :
+   revenir sur un écran retrouve son filtrage. Ils ne sont pas persistés — une
+   recherche est une intention du moment, pas un réglage.
+   -------------------------------------------------------------------------- */
+
+const LIST_DEFAULTS = { q: '', page: 1, size: 25, sort: null, direction: 'asc' };
+
+/**
+ * État d'une liste. `defaults` permet à un écran de proposer sa propre taille
+ * de page — 50 pour un journal d'audit, 25 pour un tableau. Les choix de
+ * l'utilisateur priment : seules les clés qu'il a touchées sont conservées,
+ * de sorte qu'un défaut d'écran ne les écrase jamais.
+ */
+export function listState(id, defaults = {}) {
+  return { ...LIST_DEFAULTS, ...defaults, ...(store.get().ui.lists?.[id] || {}) };
+}
+
+export function setList(id, patch) {
+  const state = store.get();
+  const current = state.ui.lists?.[id] || {};
+  store.update({
+    ui: { ...state.ui, lists: { ...state.ui.lists, [id]: { ...current, ...patch } } },
+  });
 }
 
 /** Modifie l'état d'interface sans provoquer de rendu (saisie en cours). */

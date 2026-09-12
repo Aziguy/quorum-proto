@@ -55,8 +55,9 @@ ferme cette porte.
 - Tests de bout en bout (Playwright) sur les parcours critiques, en complément
   des tests de domaine.
 - Vérification automatique des contrastes de la palette.
-- Étude de charge : le prototype garde tout en mémoire, ce qui plafonne vers
-  quelques milliers d'électeurs par scrutin.
+- Étude de charge : le prototype garde tout en mémoire. Mesuré à 1 500
+  électeurs, le premier rendu tient en ~80 ms grâce à la pagination ; au-delà
+  de quelques milliers, il faudrait filtrer côté serveur plutôt qu'en mémoire.
 
 ## Ce qui restera hors de portée
 

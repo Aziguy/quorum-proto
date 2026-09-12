@@ -36,6 +36,7 @@ départager, quorum manqué, classement de préférences.
 | **Traçabilité** | Journal d'audit chaîné en SHA-256, vérifiable depuis l'interface ; urne scellée par empreinte |
 | **Restitution** | Procès-verbal généré depuis le décompte, procès-verbal de carence, exports CSV et JSON |
 | **Rôles** | Organisateur, scrutateur, observateur, votant — pouvoirs disjoints, réellement appliqués |
+| **Listes** | Recherche insensible aux accents, tri par colonne, pagination avec taille réglable — sur les scrutins, le corps électoral, les accès, l'émargement, les pouvoirs et le journal |
 | **Interface** | Responsive dès 320 px, thème clair/sombre, mode séance projeté, impression soignée |
 | **Langues** | Français (langue source) et anglais. Le parcours votant, la navigation et les contrôles communs sont traduits ; les écrans d'organisation restent en français — `node tools/i18n-report.mjs` donne l'état exact |
 

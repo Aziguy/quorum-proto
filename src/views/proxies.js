@@ -7,14 +7,19 @@
  */
 
 import { html } from '../core/dom.js';
-import { btn, card, banner, table, statGrid, field } from '../ui/components.js';
+import {
+  btn, card, banner, table, statGrid, field, searchInput, pagination, noResults,
+} from '../ui/components.js';
+import { search as searchItems, paginate } from '../core/collection.js';
 import { formatNumber, formatDate } from '../core/format.js';
 import { STATUS } from '../domain/schema.js';
 import { registerProxy, revokeProxy, proxiesHeldBy } from '../domain/election.js';
 import { can } from '../domain/permissions.js';
-import { getElection, applyOperation } from '../app.js';
+import { getElection, applyOperation, listState } from '../app.js';
 import { toast, confirmDialog } from '../ui/feedback.js';
 import { electionHeader, electionTabs, missingElection } from './_shared.js';
+
+const LIST = 'proxies';
 
 const PROXY_ERRORS = {
   'limit-reached': 'plafond atteint',
@@ -44,6 +49,7 @@ export default {
     }
 
     const byId = new Map(election.electorate.map((v) => [v.id, v]));
+    const list = listState(LIST);
     const valid = election.proxies.filter((p) => p.status === 'valid');
     const rejected = election.proxies.filter((p) => p.status === 'rejected');
     const mandataries = new Set(valid.map((p) => p.toId));
@@ -57,6 +63,12 @@ export default {
     const holders = election.electorate.filter((voter) => (
       proxiesHeldBy(election, voter.id).length < election.proxyLimit
     ));
+
+    const name = (id) => byId.get(id)?.name || '';
+    const foundProxies = searchItems([...election.proxies].reverse(), list.q, [
+      (p) => name(p.fromId), (p) => name(p.toId), (p) => p.status,
+    ]);
+    const proxyPage = paginate(foundProxies, list);
 
     return html`<div class="view">
       ${electionHeader(election)}
@@ -104,10 +116,18 @@ export default {
       <div style="margin-top:var(--s-5)">
         ${card({
     title: 'Pouvoirs enregistrés',
-    body: election.proxies.length ? table({
+    body: election.proxies.length ? html`
+      <div class="list-toolbar">
+        ${searchInput({
+    list: LIST, value: list.q,
+    placeholder: 'Rechercher un mandant ou un mandataire…',
+    label: 'Rechercher un pouvoir', width: '22rem',
+  })}
+      </div>
+      ${proxyPage.total ? html`${table({
       head: ['Mandant', 'Mandataire', 'Déposé le', 'État', ''],
       caption: 'Liste des pouvoirs',
-      rows: [...election.proxies].reverse().map((proxy) => [
+      rows: proxyPage.items.map((proxy) => [
         byId.get(proxy.fromId)?.name || '—',
         html`${byId.get(proxy.toId)?.name || '—'}
             <span class="dim nums">(${proxiesHeldBy(election, proxy.toId).length}/${election.proxyLimit})</span>`,
@@ -121,7 +141,10 @@ export default {
           ? btn({ label: 'Révoquer', act: 'revoke', data: { id: proxy.id }, variant: 'ghost', size: 'sm' })
           : '',
       ]),
-    }) : html`<p class="muted">Aucun pouvoir enregistré.</p>`,
+    })}
+        ${pagination({ list: LIST, ...proxyPage, noun: 'pouvoirs', nounOne: 'pouvoir' })}`
+    : noResults({ list: LIST, query: list.q, noun: 'pouvoir' })}`
+      : html`<p class="muted">Aucun pouvoir enregistré.</p>`,
   })}
       </div>
     </div>`;

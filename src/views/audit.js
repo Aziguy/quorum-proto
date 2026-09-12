@@ -7,15 +7,28 @@
  */
 
 import { html } from '../core/dom.js';
-import { btn, card, banner, statGrid } from '../ui/components.js';
+import {
+  btn, card, banner, statGrid, searchInput, pagination, noResults, segmented,
+} from '../ui/components.js';
+import { search as searchItems, paginate } from '../core/collection.js';
 import { formatNumber, formatDate } from '../core/format.js';
 import { describe, severityOf, verifyChain } from '../domain/audit.js';
 import { can } from '../domain/permissions.js';
-import { getElection, setUi } from '../app.js';
+import { getElection, setUi, listState } from '../app.js';
 import { toast } from '../ui/feedback.js';
 import { download } from '../core/storage.js';
 import { toCsv } from '../core/csv.js';
 import { electionHeader, electionTabs, missingElection, forbidden } from './_shared.js';
+
+const LIST = 'audit';
+
+/** Filtrer par gravité : sur un journal fourni, c'est le tri le plus utile. */
+const SEVERITIES = [
+  { id: 'all', label: 'Tous' },
+  { id: 'critical', label: 'Critiques' },
+  { id: 'notice', label: 'Notables' },
+  { id: 'info', label: 'Courants' },
+];
 
 const SEVERITY_TONE = { info: 'var(--brand)', notice: 'var(--warn)', critical: 'var(--seal)' };
 
@@ -41,9 +54,20 @@ export default {
     if (!election) return missingElection();
     if (!can(ctx.ui.role, 'audit.view')) return forbidden(ctx.ui.role, "Consulter le journal d'audit");
 
-    const entries = [...election.audit].reverse();
     const check = ctx.ui.chainCheck;
     const critical = election.audit.filter((e) => severityOf(e) === 'critical').length;
+    const severity = ctx.ui.auditSeverity || 'all';
+    // Un journal se parcourt par blocs plus larges qu'un tableau nominatif.
+    const list = listState(LIST, { size: 50 });
+
+    // Du plus récent au plus ancien : on consulte un journal pour savoir ce qui
+    // vient de se passer, pas pour relire l'ouverture du scrutin.
+    const ordered = [...election.audit].reverse()
+      .filter((entry) => severity === 'all' || severityOf(entry) === severity);
+    const found = searchItems(ordered, list.q, [
+      (e) => describe(e), (e) => e.actor, (e) => e.action, (e) => e.hash,
+    ]);
+    const page = paginate(found, list);
 
     return html`<div class="view">
       ${electionHeader(election, {
@@ -79,14 +103,28 @@ export default {
       ${card({
     title: 'Événements',
     hint: 'Du plus récent au plus ancien. Les scrutateurs et observateurs y ont accès en lecture.',
-    body: entries.length
-      ? html`<ul style="list-style:none;padding:0;margin:0">${entries.map(entryRow)}</ul>`
-      : html`<p class="muted">Aucun événement enregistré.</p>`,
+    body: html`
+        <div class="list-toolbar">
+          ${searchInput({
+    list: LIST, value: list.q,
+    placeholder: 'Rechercher un événement, un acteur, une empreinte…',
+    label: "Rechercher dans le journal",
+  })}
+          ${segmented({ items: SEVERITIES, value: severity, act: 'setSeverity', label: 'Gravité' })}
+        </div>
+        ${page.total
+    ? html`<ul style="list-style:none;padding:0;margin:0">${page.items.map(entryRow)}</ul>
+            ${pagination({ list: LIST, ...page, noun: 'événements', nounOne: 'événement' })}`
+    : list.q
+      ? noResults({ list: LIST, query: list.q, noun: 'événement' })
+      : html`<p class="muted">Aucun événement dans cette catégorie.</p>`}`,
   })}
     </div>`;
   },
 
   actions: {
+    setSeverity: (ctx, { data }) => setUi({ auditSeverity: data.value }),
+
     async verify(ctx) {
       const election = getElection(ctx.params.id);
       const result = await verifyChain(election.audit);

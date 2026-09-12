@@ -10,13 +10,17 @@ import { html, raw } from '../core/dom.js';
 import { icon } from '../ui/icons.js';
 import {
   btn, statusBadge, segmented, emptyState, meter, pageHead, statGrid, badge,
+  searchInput, pagination, noResults,
 } from '../ui/components.js';
+import { search as searchItems, paginate } from '../core/collection.js';
 import { formatNumber, formatPercent, formatRelative, formatDate } from '../core/format.js';
 import { t } from '../core/i18n.js';
 import { STATUS, METHODS } from '../domain/schema.js';
 import { participationStats } from '../domain/tally.js';
 import { evaluateQuorum } from '../domain/quorum.js';
-import { setUi } from '../app.js';
+import { setUi, listState } from '../app.js';
+
+const LIST = 'elections';
 
 const filters = () => [
   { id: 'all', label: t('filter.all', 'Tous') },
@@ -93,7 +97,15 @@ export default {
   render(ctx) {
     const { elections, config } = ctx;
     const filter = ctx.query.filtre || ctx.ui.filter || 'all';
-    const visible = filter === 'all' ? elections : elections.filter((e) => e.status === filter);
+    const list = listState(LIST);
+
+    const byStatus = filter === 'all' ? elections : elections.filter((e) => e.status === filter);
+    const found = searchItems(byStatus, list.q, [
+      (e) => e.title, (e) => e.ref, (e) => METHODS[e.method].label,
+    ]);
+    // La pagination ne s'affiche qu'à partir du moment où elle sert.
+    const page = paginate(found, list);
+    const searchable = elections.length > 6;
 
     const open = elections.filter((e) => e.status === STATUS.OPEN);
     const totalVoters = open.reduce((sum, e) => sum + participationStats(e).representedVoters, 0);
@@ -147,13 +159,25 @@ export default {
     },
   ]) : ''}
 
-      <div style="margin:var(--s-5) 0">
+      <div class="list-toolbar" style="margin-top:var(--s-5)">
+        ${searchable ? searchInput({
+    list: LIST, value: list.q,
+    placeholder: t('dashboard.searchPlaceholder', 'Rechercher un intitulé, une référence…'),
+    label: t('dashboard.searchLabel', 'Rechercher un scrutin'),
+  }) : ''}
         ${segmented({ items: filters(), value: filter, act: 'setFilter', label: t('common.filter', 'Filtrer') })}
       </div>
 
-      ${visible.length
-    ? html`<div class="stack">${visible.map(electionCard)}</div>`
-    : html`<div class="empty"><p style="margin:0">${t('dashboard.emptyCategory', 'Aucun scrutin dans cette catégorie.')}</p></div>`}
+      ${page.total
+    ? html`<div class="stack">${page.items.map(electionCard)}</div>
+        ${pagination({
+    list: LIST, ...page,
+    noun: t('dashboard.noun', 'scrutins'),
+    nounOne: t('dashboard.nounOne', 'scrutin'),
+  })}`
+    : list.q
+      ? noResults({ list: LIST, query: list.q, noun: t('dashboard.nounOne', 'scrutin') })
+      : html`<div class="empty"><p style="margin:0">${t('dashboard.emptyCategory', 'Aucun scrutin dans cette catégorie.')}</p></div>`}
     </div>`;
   },
 

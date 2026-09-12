@@ -10,6 +10,7 @@
 import { html, raw, esc, cx, attrs } from '../core/dom.js';
 import { icon } from './icons.js';
 import { formatPercent, formatNumber, share } from '../core/format.js';
+import { PAGE_SIZES, pageWindow } from '../core/collection.js';
 import { STATUS } from '../domain/schema.js';
 import { t } from '../core/i18n.js';
 
@@ -242,11 +243,22 @@ export function emptyState({ title, body, actions = '', iconName = 'ballotBox' }
   </div>`;
 }
 
+/**
+ * `head` accepte une chaîne, du balisage, ou un objet { content, sort } —
+ * cette dernière forme pose `aria-sort`, que les lecteurs d'écran annoncent.
+ */
 export function table({ head, rows, caption = '' }) {
-  return html`<div class="table-wrap">
+  const headCell = (cell) => (cell && typeof cell === 'object' && 'content' in cell
+    ? html`<th scope="col" aria-sort="${cell.sort}">${cell.content}</th>`
+    : html`<th scope="col">${cell}</th>`);
+
+  // tabindex + role : une zone qui défile doit être atteignable au clavier,
+  // sinon ses colonnes de droite sont inaccessibles sans souris.
+  return html`<div class="table-wrap" tabindex="0" role="region"
+    ${raw(caption ? `aria-label="${esc(caption)}"` : '')}>
     <table class="table">
       ${caption ? html`<caption class="sr-only">${caption}</caption>` : ''}
-      <thead><tr>${head.map((h) => html`<th scope="col">${h}</th>`)}</tr></thead>
+      <thead><tr>${head.map(headCell)}</tr></thead>
       <tbody>${rows.map((row) => html`<tr>${row.map((cellValue) => html`<td>${cellValue}</td>`)}</tr>`)}</tbody>
     </table>
   </div>`;
@@ -287,4 +299,100 @@ export function skeletonList(count = 3) {
       <div class="skeleton__line" style="width:62%;height:1rem;margin-bottom:var(--s-2)"></div>
       <div class="skeleton__line" style="width:40%"></div>
     </div>`)}</div>`;
+}
+
+/* --- Recherche et pagination ------------------------------------------------
+   Ces deux composants partagent un identifiant de liste (`list`) : plusieurs
+   listes peuvent donc coexister sur un même écran sans se mélanger.
+   Les actions correspondantes sont globales (src/main.js), aucune vue n'a
+   besoin de les redéclarer.
+   -------------------------------------------------------------------------- */
+
+export function searchInput({
+  list, value = '', placeholder = 'Rechercher…', label = 'Rechercher', width = '22rem',
+}) {
+  const id = `search_${list}`;
+  return html`<div class="search-field" style="max-width:${width}">
+    <label class="sr-only" for="${id}">${label}</label>
+    <span class="search-field__icon" aria-hidden="true">${raw(icon('search', { size: 15 }))}</span>
+    <input class="input search-field__input" id="${id}" type="search" value="${value}"
+      placeholder="${placeholder}" data-act="listSearch" data-list="${list}"
+      autocomplete="off" spellcheck="false">
+    ${value ? html`<button type="button" class="search-field__clear" data-act="listClear"
+      data-list="${list}" aria-label="Effacer la recherche">${raw(icon('close', { size: 13 }))}</button>` : ''}
+  </div>`;
+}
+
+/**
+ * Barre de pagination. Elle annonce d'abord *ce qui est affiché* — « 26 à 50
+ * sur 412 » — avant les commandes : sans ce repère, changer de page revient à
+ * naviguer à l'aveugle.
+ */
+export function pagination({
+  list, page, pages, total, from, to, size,
+  noun = 'éléments', nounOne, sizes = true,
+}) {
+  if (total === 0) return '';
+
+  const pageButton = (number) => (number === null
+    ? html`<span class="pager__gap" aria-hidden="true">…</span>`
+    : html`<button type="button" class="pager__page" data-act="listPage"
+        data-list="${list}" data-page="${number}"
+        ${raw(number === page ? 'aria-current="page"' : '')}
+        aria-label="Page ${number} sur ${pages}">${number}</button>`);
+
+  return html`<nav class="pager" aria-label="Pagination">
+    <p class="pager__count" role="status">
+      <strong class="nums">${formatNumber(from)}</strong>–<strong class="nums">${formatNumber(to)}</strong>
+      sur <strong class="nums">${formatNumber(total)}</strong> ${total === 1 ? (nounOne || noun) : noun}
+    </p>
+
+    ${pages > 1 ? html`<div class="pager__controls">
+      <button type="button" class="pager__step" data-act="listPage" data-list="${list}"
+        data-page="${page - 1}" aria-label="Page précédente"
+        ${raw(page <= 1 ? 'disabled' : '')}>${raw(icon('chevronLeft', { size: 14 }))}</button>
+      ${pageWindow(page, pages).map(pageButton)}
+      <button type="button" class="pager__step" data-act="listPage" data-list="${list}"
+        data-page="${page + 1}" aria-label="Page suivante"
+        ${raw(page >= pages ? 'disabled' : '')}>${raw(icon('chevronRight', { size: 14 }))}</button>
+    </div>` : ''}
+
+    ${sizes && total > PAGE_SIZES[0] ? html`<div class="pager__size">
+      <label class="sr-only" for="size_${list}">Éléments par page</label>
+      <select class="select" id="size_${list}" data-act="listSize" data-list="${list}">
+        ${PAGE_SIZES.map((option) => html`<option value="${option}"
+          ${raw(option === size ? 'selected' : '')}>${option} par page</option>`)}
+      </select>
+    </div>` : ''}
+  </nav>`;
+}
+
+/** Message affiché quand une recherche ne donne rien — avec la sortie. */
+export function noResults({ list, query, noun = 'résultat' }) {
+  return html`<div class="empty" style="padding:var(--s-7) var(--s-5)">
+    <p style="margin:0 0 var(--s-3)">Aucun ${noun} pour « <strong>${query}</strong> ».</p>
+    ${btn({ label: 'Effacer la recherche', act: 'listClear', data: { list }, size: 'sm' })}
+  </div>`;
+}
+
+/**
+ * En-tête de colonne triable. Le sens du tri est porté par `aria-sort`, lu par
+ * les lecteurs d'écran, et doublé d'une flèche pour les autres.
+ */
+export function sortHeader({ list, column, label, state, align = 'left' }) {
+  const active = state.sort === column;
+  const direction = active ? state.direction : null;
+  const arrow = !active ? '' : icon(direction === 'asc' ? 'arrowUp' : 'arrowDown', { size: 12 });
+  return html`<button type="button" class="sort-header" data-act="listSort"
+    data-list="${list}" data-sort="${column}"
+    style="justify-content:${align === 'right' ? 'flex-end' : 'flex-start'}"
+    aria-label="Trier par ${label}${active ? (direction === 'asc' ? ', ordre croissant' : ', ordre décroissant') : ''}">
+    ${label}${raw(arrow)}
+  </button>`;
+}
+
+/** Valeur d'`aria-sort` à poser sur le `<th>` correspondant. */
+export function ariaSort(state, column) {
+  if (state.sort !== column) return 'none';
+  return state.direction === 'asc' ? 'ascending' : 'descending';
 }

@@ -8,15 +8,20 @@
  */
 
 import { html } from '../core/dom.js';
-import { btn, card, banner, table, statGrid, segmented } from '../ui/components.js';
+import {
+  btn, card, banner, table, statGrid, segmented, searchInput, pagination, noResults,
+} from '../ui/components.js';
+import { search as searchItems, paginate } from '../core/collection.js';
 import { formatNumber, formatDate } from '../core/format.js';
 import { STATUS } from '../domain/schema.js';
 import { pendingVoters, proxiesHeldBy } from '../domain/election.js';
-import { getElection, setUi } from '../app.js';
+import { getElection, setUi, listState } from '../app.js';
 import { toast } from '../ui/feedback.js';
 import { download } from '../core/storage.js';
 import { toCsv } from '../core/csv.js';
 import { electionHeader, electionTabs, missingElection } from './_shared.js';
+
+const LIST = 'polling';
 
 const FILTERS = [
   { id: 'pending', label: 'N’ont pas voté' },
@@ -66,12 +71,18 @@ export default {
     }
 
     const filter = ctx.ui.pollingFilter || 'pending';
-    const voters = election.electorate.filter((voter) => {
+    const list = listState(LIST);
+
+    const filtered = election.electorate.filter((voter) => {
       if (filter === 'pending') return !voter.tokenUsed;
       if (filter === 'voted') return voter.tokenUsed;
       if (filter === 'code') return !voter.email;
       return true;
     });
+    const found = searchItems(filtered, list.q, [
+      (v) => v.name, (v) => v.email, (v) => v.accessCode || v.token || '',
+    ]);
+    const page = paginate(found, list);
     const withoutEmail = election.electorate.filter((v) => !v.email);
 
     return html`<div class="view">
@@ -102,22 +113,27 @@ export default {
   ])}
       </div>
 
-      <div style="margin-bottom:var(--s-4)">
+      <div class="list-toolbar">
+        ${searchInput({
+    list: LIST, value: list.q,
+    placeholder: 'Rechercher un nom, une adresse, un code…',
+    label: 'Rechercher un accès',
+  })}
         ${segmented({ items: FILTERS, value: filter, act: 'setPollingFilter', label: 'Filtrer' })}
       </div>
 
       ${card({
-    body: voters.length
-      ? table({
-        head: ['Électeur', 'Canal', 'Accès', 'État', ''],
-        caption: 'Accès au bulletin',
-        rows: voters.slice(0, 60).map((voter) => accessRow(election, voter)),
-      })
-      : html`<p class="muted">Aucun électeur dans cette catégorie.</p>`,
+    body: page.total
+      ? html`${table({
+    head: ['Électeur', 'Canal', 'Accès', 'État', ''],
+    caption: 'Accès au bulletin',
+    rows: page.items.map((voter) => accessRow(election, voter)),
   })}
-
-      ${voters.length > 60 ? html`<p class="field__hint">${formatNumber(voters.length - 60)} électeurs
-        supplémentaires non affichés. Utilisez l'export pour la liste complète.</p>` : ''}
+        ${pagination({ list: LIST, ...page, noun: 'accès', nounOne: 'accès' })}`
+      : list.q
+        ? noResults({ list: LIST, query: list.q, noun: 'accès' })
+        : html`<p class="muted">Aucun électeur dans cette catégorie.</p>`,
+  })}
     </div>`;
   },
 

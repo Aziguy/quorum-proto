@@ -9,7 +9,9 @@
 
 import { createRouter } from './core/router.js';
 import { render } from './core/dom.js';
-import { store, init, setUi, applyTheme, currentTheme, applyLocale } from './app.js';
+import {
+  store, init, setUi, setList, listState, applyTheme, currentTheme, applyLocale,
+} from './app.js';
 import { header, navigation } from './shell.js';
 import { getLocale, LOCALES } from './core/i18n.js';
 import { toast } from './ui/feedback.js';
@@ -85,6 +87,30 @@ function asHtml(value) {
 
 /* --- Rendu ------------------------------------------------------------------ */
 
+/**
+ * Un re-rendu remplace tout le contenu : l'élément qui avait le focus
+ * disparaît. Sans ces deux fonctions, taper dans un champ de recherche
+ * perdrait le focus au premier caractère — le filtrage étant, lui, immédiat.
+ */
+function captureFocus() {
+  const el = document.activeElement;
+  if (!el || !el.id || !root.contains(el)) return null;
+  const isText = typeof el.selectionStart === 'number';
+  return { id: el.id, start: isText ? el.selectionStart : null, end: isText ? el.selectionEnd : null };
+}
+
+function restoreFocus(snapshot) {
+  if (!snapshot) return false;
+  const el = root.querySelector(`#${CSS.escape(snapshot.id)}`);
+  if (!el) return false;
+  el.focus({ preventScroll: true });
+  if (snapshot.start !== null && typeof el.setSelectionRange === 'function') {
+    // Certains types de champ refusent la sélection : l'échec est sans effet.
+    try { el.setSelectionRange(snapshot.start, snapshot.end); } catch { /* ignoré */ }
+  }
+  return true;
+}
+
 function paint() {
   const state = store.get();
   if (!state.ready) return;
@@ -92,6 +118,7 @@ function paint() {
   const view = activeView();
   const ctx = context();
   const body = asHtml(view.render(ctx));
+  const focused = captureFocus();
 
   if (view.layout === 'bare') {
     root.className = '';
@@ -106,10 +133,11 @@ function paint() {
       </div>`;
   }
   root.removeAttribute('aria-busy');
+  const restored = restoreFocus(focused);
 
-  // Le focus ne se déplace qu'au changement de page : un simple re-rendu ne
-  // doit pas arracher le focus à l'élément que l'utilisateur manipule.
-  if (lastRenderedPath !== current.path) {
+  // Le focus ne se déplace qu'au changement de page, et jamais s'il vient
+  // d'être rendu à l'élément que l'utilisateur manipulait.
+  if (lastRenderedPath !== current.path && !restored) {
     lastRenderedPath = current.path;
     window.scrollTo({ top: 0 });
     const title = root.querySelector('#view-title') || root.querySelector('h1');
@@ -145,6 +173,28 @@ const GLOBAL_ACTIONS = {
   setRole(ctx, { el }) {
     setUi({ role: el.value });
     toast(`Rôle endossé : ${el.options[el.selectedIndex].text}`);
+  },
+
+  /* --- Listes : recherche, pagination, tri ---------------------------------
+     Déclarées une fois ici, elles servent toutes les vues. Une liste est
+     identifiée par `data-list` ; plusieurs peuvent donc coexister sur un écran.
+     Toute modification du filtre ramène à la première page : rester en page 7
+     d'un résultat qui n'en compte plus que 2 afficherait un écran vide.
+     ---------------------------------------------------------------------- */
+  listSearch: (ctx, { el }) => setList(el.dataset.list, { q: el.value, page: 1 }),
+  listClear: (ctx, { data }) => setList(data.list, { q: '', page: 1 }),
+  listPage: (ctx, { data }) => setList(data.list, { page: Number(data.page) }),
+  listSize: (ctx, { el }) => setList(el.dataset.list, { size: Number(el.value), page: 1 }),
+
+  /** Un clic sur la colonne déjà triée inverse le sens. */
+  listSort(ctx, { data }) {
+    const state = listState(data.list);
+    const sameColumn = state.sort === data.sort;
+    setList(data.list, {
+      sort: data.sort,
+      direction: sameColumn && state.direction === 'asc' ? 'desc' : 'asc',
+      page: 1,
+    });
   },
 };
 

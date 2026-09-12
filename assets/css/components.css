@@ -311,11 +311,20 @@
 .tally-row[data-elected="true"] .tally-row__name { color: var(--ok); }
 
 /* --- Tableaux ------------------------------------------------------------ */
+/* Ombres de défilement : elles n'apparaissent que s'il reste du contenu
+   au-delà du bord. Sur mobile, c'est le seul indice qu'un tableau se
+   poursuit à droite. Technique purement CSS, sans écouteur de défilement. */
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--border); border-radius: var(--r-lg);
-  background: var(--surface);
+  background:
+    linear-gradient(to right, var(--surface) 40%, transparent) left center / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 40%, transparent) right center / 2.5rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(27, 26, 24, 0.14), transparent) left center / 0.7rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(27, 26, 24, 0.14), transparent) right center / 0.7rem 100% no-repeat scroll,
+    var(--surface);
 }
+.table-wrap:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 .table { font-size: var(--text-sm); min-width: 32rem; }
 .table th, .table td {
   padding: var(--s-3) var(--s-4); text-align: left; vertical-align: middle;
@@ -497,3 +506,73 @@
 }
 .session .meter { background: color-mix(in srgb, var(--bg) 18%, transparent); }
 .session .card { background: color-mix(in srgb, var(--bg) 8%, transparent); border-color: color-mix(in srgb, var(--bg) 18%, transparent); color: var(--bg); }
+
+/* --- Champ de recherche ----------------------------------------------------- */
+.search-field { position: relative; flex: 1 1 16rem; min-width: 0; }
+.search-field__icon {
+  position: absolute; left: var(--s-3); top: 50%; transform: translateY(-50%);
+  color: var(--text-3); pointer-events: none; display: flex;
+}
+.search-field__input { padding-left: var(--s-8); padding-right: var(--s-8); }
+/* La croix native de Safari et Chrome doublonnerait avec la nôtre. */
+.search-field__input::-webkit-search-cancel-button { display: none; }
+.search-field__clear {
+  position: absolute; right: var(--s-2); top: 50%; transform: translateY(-50%);
+  display: grid; place-items: center;
+  width: 1.5rem; height: 1.5rem; border-radius: var(--r-full);
+  color: var(--text-3);
+}
+.search-field__clear:hover { background: var(--surface-2); color: var(--text); }
+
+/* --- Pagination -------------------------------------------------------------- */
+.pager {
+  display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap;
+  margin-top: var(--s-4); padding-top: var(--s-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+.pager__count { color: var(--text-2); margin-right: auto; }
+.pager__controls { display: flex; align-items: center; gap: 2px; }
+.pager__page, .pager__step {
+  display: grid; place-items: center;
+  min-width: 2rem; height: 2rem; padding: 0 var(--s-2);
+  border-radius: var(--r-sm); border: 1px solid transparent;
+  font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--text-2);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.pager__page:hover:not([aria-current]), .pager__step:hover:not(:disabled) {
+  background: var(--surface-2); color: var(--text);
+}
+.pager__page[aria-current="page"] {
+  background: var(--brand); border-color: var(--brand); color: var(--brand-on); font-weight: 600;
+}
+.pager__step:disabled { opacity: 0.3; }
+.pager__gap { padding: 0 var(--s-1); color: var(--text-3); }
+.pager__size .select {
+  min-height: 2rem; width: auto; font-size: var(--text-xs);
+  padding: var(--s-1) var(--s-7) var(--s-1) var(--s-2);
+}
+
+@media (max-width: 40rem) {
+  .pager { gap: var(--s-3); }
+  .pager__count { flex: 1 1 100%; margin-right: 0; }
+  .pager__size { flex: 1 1 100%; }
+  .pager__size .select { width: 100%; }
+}
+
+/* --- Barre d'outils d'une liste --------------------------------------------- */
+.list-toolbar {
+  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
+  margin-bottom: var(--s-4);
+}
+@media (print) { .pager, .list-toolbar { display: none; } }
+
+/* --- En-tête de colonne triable --------------------------------------------- */
+.sort-header {
+  display: inline-flex; align-items: center; gap: var(--s-1);
+  width: 100%; padding: 0;
+  font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit;
+}
+.sort-header:hover { color: var(--text); }
+.table th:has(.sort-header) { padding: 0; }
+.table th:has(.sort-header) .sort-header { padding: var(--s-3) var(--s-4); }
